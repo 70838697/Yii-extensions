@@ -44,11 +44,12 @@ class EDownloadHelper{
 	 * 
 	 * Download a file with resume, stream and speed options
 	 * 
-	 * @param string $filename path to file including filename
+	 * @param string $filepath path to file including filename
+	 * @param string $filename real filename
 	 * @param integer $speed maximum download speed
 	 * @param boolean $doStream if stream or not
 	 */
-	public static function download( $filepath, $maxSpeed = 100, $doStream = false ){
+	public static function download( $filepath, $maxSpeed = 100, $doStream = false, $filename = null ){
 	
 		$seek_start 	=  0;
 		$seek_end 		= -1;
@@ -59,7 +60,8 @@ class EDownloadHelper{
 			throw new CException(Yii::t('EDownloadHelper','Filepath does not exists on specified location or is not a regular file'));
 		
 		$mimeType = CFileHelper::getMimeType( $filepath );
-		$filename = basename( $filepath );
+		if($filename===null)
+			$filename = basename( $filepath );
 		
 		if($mimeType == null) $mimeType = "application/octet-stream";
 		
@@ -86,14 +88,15 @@ class EDownloadHelper{
 		$old_status = ignore_user_abort(true);
 		set_time_limit(0);
 
-		$size = filesize( $filepath );
+		$size = @filesize( $filepath );
 		
 		if($seek_start > ($size -1)) $seek_start = 0;
 		
 		// open the file and move pointer
 		// to started chunk
-		$res = fopen( $filepath , 'rb');
-		if($seek_start) fseek($res, $seek_start);
+		$res = @fopen( $filepath , 'rb');
+		if($res==0){ echo 'File not exists!';return;}
+		if($seek_start) @fseek($res, $seek_start);
 		if($seek_end < $seek_start) $seek_end = $size -1;
 		
 		
@@ -109,7 +112,7 @@ class EDownloadHelper{
 	        $fileName= preg_replace('/\./', '%2e', $filename, substr_count($filename, '.') - 1); 
 	    } 
 	    header('Content-Disposition: '.$contentDisposition.'; filename="'.$filename.'"');
-	    header('Last-Modified: ' . date('D, d M Y H:i:s \G\M\T', filemtime( $filepath )));
+	    header('Last-Modified: ' . date('D, d M Y H:i:s \G\M\T', @filemtime( $filepath )));
 	    
 	    // flushing a data section?
 	    if( $data_section )
@@ -125,16 +128,16 @@ class EDownloadHelper{
 	    
 	    $size = $seek_end - $seek_start + 1;
 	    
-	    while(!( connection_aborted() || connection_status() == 1) && !feof($res))
+	    while(!( connection_aborted() || connection_status() == 1) && !@feof($res))
 	    {
-	    	print(fread($res, $buffsize*$maxSpeed));
+	    	print(@fread($res, $buffsize*$maxSpeed));
 	    	
 	    	flush();
 	    	@ob_flush();
 	    	sleep(1);
 	    }
 	    // close file
-	    fclose($res);
+	    @fclose($res);
 	    // restore defaults
 	    ignore_user_abort($old_status);
 	    set_time_limit(ini_get('max_execution_time'));
