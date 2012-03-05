@@ -49,7 +49,7 @@ class EDownloadHelper{
 	 * @param integer $speed maximum download speed
 	 * @param boolean $doStream if stream or not
 	 */
-	public static function download( $filepath, $maxSpeed = 100, $doStream = false, $filename = null ){
+	public static function download( $filepath, $filename = null, $maxSpeed = 100, $doStream = false ){
 	
 		$seek_start 	=  0;
 		$seek_end 		= -1;
@@ -60,7 +60,7 @@ class EDownloadHelper{
 			throw new CException(Yii::t('EDownloadHelper','Filepath does not exists on specified location or is not a regular file'));
 		
 		$mimeType = CFileHelper::getMimeType( $filepath );
-		if($filename===null)
+		if(is_null($filename))
 			$filename = basename( $filepath );
 		
 		if($mimeType == null) $mimeType = "application/octet-stream";
